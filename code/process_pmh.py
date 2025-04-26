@@ -1,8 +1,10 @@
 import ijson
 import pandas as pd
 import re
+import os
 
-filename = "C:/Users/LENOVO/Downloads/notes_sepsis.json"
+os.chdir('C:/Users/LENOVO/Downloads') # THAY ĐỔI ĐƯỜNG DẪN ĐẾN THƯ MỤC CỦA BẠN
+filename = "./data/notes_sepsis.json"
 disease_keywords = {
     'smoke': ['smoke', 'smoking', 'tobacco', 'cigarette'],
     'COPD': ['copd', 'chronic obstructive pulmonary disease'],
@@ -47,12 +49,6 @@ def extract_diseases(text):
 # Đọc từng phần tử trong mảng JSON
 results = []
 with open(filename, 'r', encoding='utf-8') as f:
-    # objects = ijson.items(f, 'item')
-    # for obj in objects:
-    #     data = extract_diseases(obj.get('text', ''))
-    #     data['subject_id'] = obj.get('subject_id')
-    #     data['hadm_id'] = obj.get('hadm_id')
-    #     results.append(data)
     for line in f:
         obj = eval(line.strip())  # Chuyển đổi dòng thành một đối tượng JSON
         data = extract_diseases(obj.get('text', ''))
@@ -62,5 +58,5 @@ with open(filename, 'r', encoding='utf-8') as f:
 
 # Chuyển sang DataFrame
 df = pd.DataFrame(results)
-df.to_csv("C:/Users/LENOVO/Downloads/past_medical_history.csv", index=False)
-print("✅ Đã lưu file past_medical_history.csv")
+df.to_csv("./data/past_medical_history_extracted.csv", index=False)
+print("Đã lưu file past_medical_history_extracted.csv")
