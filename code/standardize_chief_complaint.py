@@ -1,9 +1,11 @@
 import pandas as pd
 from openpyxl import load_workbook
+import os
 
+os.chdir('C:/Users/LENOVO/Downloads') # THAY ĐỔI ĐƯỜNG DẪN ĐẾN THƯ MỤC CỦA BẠN
 # Đọc dữ liệu từ file Excel
-map_path = "C:/Users/LENOVO/Downloads/complaint_extracted.xlsx"
-data_path = "C:/Users/LENOVO/Downloads/triage_data.xlsx"
+map_path = "./data/complaint_extracted.xlsx"
+data_path = "./data/triage_data.xlsx"
 
 # Sheet ccmap: chứa old_word → new_word
 df_map = pd.read_excel(map_path, sheet_name='result')
@@ -55,4 +57,4 @@ with pd.ExcelWriter(data_path, engine='openpyxl', mode='a', if_sheet_exists='ove
     
     df_to_write.to_excel(writer, sheet_name=sheet_name, startcol=startcol, startrow=0, index=False, header=True)
 
-print("✅ Đã thêm cột 'chiefcomplaint_changed'.")
+print("Đã thêm cột 'chiefcomplaint_changed'.")
