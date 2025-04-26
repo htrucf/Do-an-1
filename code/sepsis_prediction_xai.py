@@ -46,7 +46,7 @@ warnings.filterwarnings("ignore", category=FutureWarning) # Tắt cảnh báo li
 
 # --- Constants ---
 os.chdir('C:/Users/LENOVO/Downloads') # THAY ĐỔI ĐƯỜNG DẪN ĐẾN THƯ MỤC CỦA BẠN
-FILE_PATH = './triage_data.xlsx'
+FILE_PATH = './data/triage_data.xlsx'
 TARGET_COLUMN = 'sepsis'
 COLUMNS_TO_DROP = ['subject_id', 'CHD', 'CHF', 'diabetes', 'stay_id', 'hadm_id',
                    'ed_intime', 'ed_outtime', 'icu_stay_id', 'icu_intime',
@@ -269,7 +269,7 @@ def explain_with_lime(model, scaler, X_train_df, X_test_df, predictors, sample_i
             exp.show_in_notebook(show_all=False)
         except Exception as e:
             print(f"Could not show LIME in notebook: {e}. Saving to HTML.")
-            html_filename = f'./lime_explanation_{model_type}_sample_{sample_index}.html'
+            html_filename = f'./results/lime_explanation_{model_type}_sample_{sample_index}.html'
             exp.save_to_file(html_filename)
             print(f"LIME explanation saved to {html_filename}")
 
@@ -285,93 +285,6 @@ def explain_with_lime(model, scaler, X_train_df, X_test_df, predictors, sample_i
         import traceback
         traceback.print_exc()
 
-# def explain_with_shap(model, X_train_scaled_df, X_test_scaled_df, X_test_df, predictors, sample_index):
-#     """
-#     Giải thích dự đoán cho một mẫu cụ thể bằng SHAP.
-#     Tự động chọn explainer, lấy SHAP values cho class 1 và vẽ waterfall plot.
-#     """
-#     print(f"\n--- SHAP Explanation for Sample Index: {sample_index} ---")
-
-#     # --- Input Validation ---
-#     if not isinstance(X_test_scaled_df, pd.DataFrame):
-#         print("Error: X_test_scaled_df must be a pandas DataFrame.")
-#         return
-#     if sample_index < 0 or sample_index >= len(X_test_scaled_df):
-#         print(f"Error: Sample index {sample_index} is out of bounds for the test set (size {len(X_test_scaled_df)}).")
-#         return
-#     if not hasattr(model, 'predict_proba'):
-#          print(f"Error: Model {type(model).__name__} does not have a 'predict_proba' method, which is required for SHAP explanations focused on probability.")
-#          return
-
-#     model_type = type(model).__name__
-#     is_tree_model = model_type in ['RandomForestClassifier', 'GradientBoostingClassifier',
-#                                    'XGBClassifier', 'LGBMClassifier', 'CatBoostClassifier']
-#     target_instance = X_test_scaled_df.iloc[[sample_index]] # Lấy mẫu cần giải thích
-#     target_instance_original = X_test_df.iloc[[sample_index]]
-
-#     try:
-#         explainer = None
-#         shap_values_output = None # Biến lưu kết quả từ explainer
-
-#         # --- Initialize Explainer ---
-#         if is_tree_model:
-#             try:
-#                 # Ưu tiên dùng masker nếu data là DataFrame (xử lý tên cột tốt hơn)
-#                 masker = shap.maskers.Independent(X_train_scaled_df, max_samples=SHAP_BACKGROUND_SAMPLE_SIZE)
-#                 explainer = shap.TreeExplainer(model, masker, feature_names=predictors)
-#             except Exception: # Fallback nếu cách trên lỗi (có thể do phiên bản SHAP cũ)
-#                  print("Fallback: Initializing TreeExplainer directly with data.")
-#                  explainer = shap.TreeExplainer(model, X_train_scaled_df, feature_names=predictors)
-#         else:
-#             # Dùng background data nhỏ
-#             # Lưu ý: sample có thể làm thay đổi nhẹ kết quả SHAP mỗi lần chạy nếu không set random_state
-#             background_data = shap.sample(X_train_scaled_df, SHAP_BACKGROUND_SAMPLE_SIZE, random_state=RANDOM_STATE)
-#             # Cần truyền hàm predict_proba
-#             explainer = shap.KernelExplainer(model.predict_proba, background_data)
-
-#         if explainer is None:
-#             print("Error: Failed to initialize SHAP explainer.")
-#             return
-
-#         # --- Calculate SHAP values ---
-#         print(f"Calculating SHAP values for sample {sample_index}...")
-#         # Luôn tính SHAP cho target_instance (1 mẫu)
-#         shap_values_output = explainer(target_instance) 
-#         # if shap_values_output.values.shape[-1] > 2:
-#             # Lấy Explanation slice cho class 1 -> đây là object hoàn chỉnh cho waterfall
-#         shap_exp_for_class1 = shap_values_output[0,:] # Index 0 vì chỉ có 1 mẫu, : là all features
-#                 # print("DEBUG: Successfully extracted Explanation slice for class 1.")
-
-
-#         print("SHAP values extraction complete.")
-
-#         shap_exp_for_class1.data = target_instance_original.values[0]
-
-#         # --- Plotting ---
-#         # Lấy xác suất dự đoán cho mẫu cụ thể
-#         sepsis_probability = model.predict_proba(target_instance)[0, 1]
-#         print(f"Sample {sample_index} Predicted Sepsis Probability: {sepsis_probability:.4f}")
-
-#         plt.figure()
-#         print("Generating SHAP waterfall plot...")
-#         # Bây giờ shap_exp_for_class1 luôn là Explanation object (hoặc đã raise lỗi)
-#         shap.plots.waterfall(shap_exp_for_class1, max_display=15, show=False)
-#         plt.title(f"SHAP Explanation for Sepsis (Class 1) - {model_type} - Sample {sample_index}\nPredicted Probability: {sepsis_probability:.4f}")
-#         # Đảm bảo đường dẫn lưu file tồn tại hoặc dùng đường dẫn tương đối
-#         # pdf_filename = f'shap_waterfall_{model_type}_sample_{sample_index}_class_1.pdf' # Lưu vào thư mục hiện tại
-#         pdf_filename = f'./shap_waterfall_{model_type}_sample_{sample_index}_class_1.pdf' # Dùng đường dẫn tuyệt đối (cẩn thận)
-#         try:
-#              plt.savefig(pdf_filename, bbox_inches='tight')
-#              print(f"SHAP waterfall plot saved to {pdf_filename}")
-#         except Exception as save_err:
-#              print(f"Error saving SHAP plot to {pdf_filename}: {save_err}")
-#         plt.show()
-
-#     except ImportError:
-#         print("SHAP library not found. Please install it: pip install shap")
-#     except Exception as e:
-#         print(f"An unexpected error occurred during SHAP explanation for model {model_type}: {e}")
-#         traceback.print_exc() # In đầy đủ traceback để debug
 def explain_with_shap(model, X_train_scaled_df, X_test_scaled_df, X_test_df, predictors, sample_index):
     """
     Giải thích dự đoán cho một mẫu cụ thể bằng SHAP.
@@ -504,7 +417,7 @@ def explain_with_shap(model, X_train_scaled_df, X_test_scaled_df, X_test_df, pre
             plt.title(f"SHAP Explanation for Sepsis (Class 1) - {model_type} - Sample {sample_index}\nPredicted Probability: {sepsis_probability:.4f}")
             plt.tight_layout() # Tự động điều chỉnh layout
 
-            pdf_filename = f'./shap_waterfall_{model_type}_sample_{sample_index}_class_1.pdf'
+            pdf_filename = f'./results/shap_waterfall_{model_type}_sample_{sample_index}_class_1.pdf'
             try:
                  plt.savefig(pdf_filename, bbox_inches='tight')
                  print(f"SHAP waterfall plot saved to {pdf_filename}")
@@ -617,7 +530,7 @@ def run_decision_curve_analysis(models_dict, X_train_scaled, y_train, X_test_sca
     plt.title('Decision Curve Analysis', fontsize=14)
     plt.legend(loc='upper right', fontsize=10)
     plt.grid(True, linestyle='--', alpha=0.6)
-    plt.savefig("C:/Users/LENOVO/Downloads/dca_curve_comparison.pdf", bbox_inches='tight')
+    plt.savefig("./results/dca_curve_comparison.pdf", bbox_inches='tight')
     print("\nDCA plot saved to dca_curve_comparison.pdf")
     plt.show()
 
@@ -711,12 +624,12 @@ if __name__ == "__main__":
 
     # 7. Run Decision Curve Analysis for ALL models
     #    (Hàm này sẽ tự huấn luyện lại các model bên trong)
-    # trained_dca_models = run_decision_curve_analysis(
-    #     models_dict, # Truyền dict gốc với tất cả model instances
-    #     X_train_scaled,
-    #     y_train,
-    #     X_test_scaled,
-    #     y_test
-    # )
+    trained_dca_models = run_decision_curve_analysis(
+        models_dict, # Truyền dict gốc với tất cả model instances
+        X_train_scaled,
+        y_train,
+        X_test_scaled,
+        y_test
+    )
 
     print("\n--- Script Execution Finished ---")
