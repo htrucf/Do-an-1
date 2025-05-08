@@ -45,7 +45,6 @@ SELECT DISTINCT
   END AS gender,
   EXTRACT(YEAR FROM eic.ed_intime) - p.anchor_year + p.anchor_age AS age,
   IF(s.stay_id IS NOT NULL, 1, 0) AS sepsis,
-  IF(soi.stay_id IS NOT NULL, 1, 0) AS suspicion, 
   d.hadm_id, d.text
 FROM ed_icu_link eic
 LEFT JOIN `physionet-data.mimiciv_hosp.patients` p
