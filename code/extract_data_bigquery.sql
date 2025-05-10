@@ -20,8 +20,7 @@ WHERE
   t.temperature BETWEEN 94.1 AND 109.4 AND
   t.o2sat BETWEEN 60 AND 100 AND
   t.sbp BETWEEN 60 AND 250 AND
-  t.dbp BETWEEN 30 AND 150 AND
-  SAFE_CAST(t.pain AS FLOAT64) IS NOT NULL
+  t.dbp BETWEEN 30 AND 150
 ),
 
 ed_icu_link AS (
