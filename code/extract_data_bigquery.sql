@@ -1,8 +1,7 @@
-/* Để trích xuất được dữ liệu, phải được grant access trên Google BigQuery đối với các dataset sau:
-1. physionet-data.mimiciv_ed (source: https://physionet.org/content/mimic-iv-ed/2.2/)
-2. physionet-data.mimiciv_icu, physionet-data.mimiciv_hosp, physionet-data.mimiciv_derived (source: https://physionet.org/content/mimiciv/2.2/)
-5. physionet-data.mimiciv_note (source: https://www.physionet.org/content/mimic-iv-note/2.2/)
-Tất cả đều thuộc project physionet-data. */
+/* Để trích xuất được dữ liệu, phải được cấp quyền truy cập (grant access) dự án `physionet-data` trên BigQuery đối với các dataset sau:
+1. physionet-data.mimiciv_ed (nguồn: https://physionet.org/content/mimic-iv-ed/2.2/)
+2. physionet-data.mimiciv_icu, physionet-data.mimiciv_hosp, physionet-data.mimiciv_derived (nguồn: https://physionet.org/content/mimiciv/2.2/)
+5. physionet-data.mimiciv_note (nguồn: https://www.physionet.org/content/mimic-iv-note/2.2/).*/
 
 -- Chạy truy vấn trên Google Cloud Console của Google BigQuery
 WITH ed_data AS (
@@ -20,7 +19,8 @@ WHERE
   t.temperature BETWEEN 94.1 AND 109.4 AND
   t.o2sat BETWEEN 60 AND 100 AND
   t.sbp BETWEEN 60 AND 250 AND
-  t.dbp BETWEEN 30 AND 150
+  t.dbp BETWEEN 30 AND 150 AND
+  SAFE_CAST(t.acuity AS FLOAT64) IS NOT NULL
 ),
 
 ed_icu_link AS (
@@ -28,6 +28,7 @@ ed_icu_link AS (
     ed.*, 
     i.stay_id AS icu_stay_id, 
     i.intime AS icu_intime,
+    ROW_NUMBER() OVER (PARTITION BY ed.subject_id, ed.stay_id ORDER BY i.intime) AS rn
   FROM ed_data ed
   JOIN `physionet-data.mimiciv_icu.icustays` i 
     ON ed.subject_id = i.subject_id
